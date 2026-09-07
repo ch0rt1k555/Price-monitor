@@ -17,11 +17,9 @@ Repository = "https://github.com"
 "Bug Tracker" = "https://github.com/issues"
     
 
-# 3. Лицензия проекта (для opensource обычно используют MIT)
 [project.license]
 text = "MIT"
 
-# 4. Классификаторы (помогают другим находить ваш проект по тегам)
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
