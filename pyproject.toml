@@ -10,7 +10,6 @@ authors = [
     { name = "Зангиев Владислав / ch0rt1k555", email = "vlad.zangiyev.97@mail.ru" }
 ]
 
-# 2. Полезные ссылки (отобразятся на PyPI, если будете публиковать)
 [project.urls]
 Homepage = "https://github.com"
 Repository = "https://github.com"
