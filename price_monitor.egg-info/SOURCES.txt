@@ -1,0 +1,8 @@
+pyproject.toml
+price_monitor/__init__.py
+price_monitor/cli.py
+price_monitor.egg-info/PKG-INFO
+price_monitor.egg-info/SOURCES.txt
+price_monitor.egg-info/dependency_links.txt
+price_monitor.egg-info/entry_points.txt
+price_monitor.egg-info/top_level.txt
