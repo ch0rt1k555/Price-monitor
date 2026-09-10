@@ -1,7 +1,6 @@
 import argparse
 
 def main():
-    print("--- CLI START ---")
     parser = argparse.ArgumentParser(description="Price Monitor CLI Manager")
 
     parser.add_argument(
