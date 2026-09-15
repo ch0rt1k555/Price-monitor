@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 def fetch_url(url):
     try:
-        # 1. Маскируемся под настоящий браузер (Chrome на Windows)
+        # Маскируемся под настоящий браузер (Chrome на Windows)
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
@@ -13,7 +13,7 @@ def fetch_url(url):
         
         response = requests.get(url, headers=headers)
         
-        # 2. Принудительно устанавливаем правильную кодировку текста
+        # Принудительно устанавливаем правильную кодировку текста
         response.encoding = 'utf-8' 
         
         return response.text
