@@ -2,12 +2,7 @@ import argparse
 import requests
 from bs4 import BeautifulSoup
 
-# def fetch_url(url):
-#     try:
-#         response = requests.get(url).text
-#         return response
-#     except Exception as e:
-#         print(f"Ошибка при запросе: {e}")
+
 def fetch_url(url):
     try:
         # 1. Маскируемся под настоящий браузер (Chrome на Windows)
@@ -44,9 +39,14 @@ def main():
 
  
     if args.command == 'check':
-        url = fetch_url(args.url)
-        soup = BeautifulSoup(url, 'lxml')
-        print(soup)
+        url = fetch_url(args.url) 
+    
+        if url != None:
+            soup = BeautifulSoup(url, 'lxml')
+            print(soup)
+        else:
+            print('Error: сайт дал неверное значение')
+    
 
     if not args.command:
         parser.print_help()
