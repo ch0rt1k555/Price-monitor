@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 def load_html(url):
     '''
     try:
+        # Маскируемся под настоящий браузер (Chrome на Windows)
         
         # Маскируемся под настоящий браузер (Chrome на Windows)
         headers = {
@@ -15,6 +16,7 @@ def load_html(url):
         
         response = requests.get(url, headers=headers)
         
+        # Принудительно устанавливаем правильную кодировку текста
         # Принудительно устанавливаем правильную кодировку текста
         response.encoding = 'utf-8' 
     
