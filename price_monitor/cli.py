@@ -3,9 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def fetch_url(url):
+def load_html(url):
+    '''
     try:
-        # 1. Маскируемся под настоящий браузер (Chrome на Windows)
+        
+        # Маскируемся под настоящий браузер (Chrome на Windows)
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
@@ -13,12 +15,19 @@ def fetch_url(url):
         
         response = requests.get(url, headers=headers)
         
-        # 2. Принудительно устанавливаем правильную кодировку текста
+        # Принудительно устанавливаем правильную кодировку текста
         response.encoding = 'utf-8' 
-        
-        return response.text
+    
+        with open("traning.html", "r", encoding="utf-8") as file:
+            html_content = file.read()
+        return html_content
     except Exception as e:
         print(f"Ошибка при запросе: {e}")
+    '''    
+
+    with open("traning.html", "r", encoding="utf-8") as file:
+        html_content = file.read()
+    return html_content
 
 
 
@@ -39,17 +48,17 @@ def main():
 
  
     if args.command == 'check':
-        url = fetch_url(args.url) 
-    
-        if url != None:
-            soup = BeautifulSoup(url, 'lxml')
-            print(soup)
+        html = load_html(args.url)
+        soup = BeautifulSoup(html, 'lxml')         
+        print(html)
+        if soup.find('p', class_ = 'price') is not None:
+            prices = list(i.text + ' Rub' for i in soup.find_all('p', class_ = 'price'))
+            print(prices)
         else:
             print('Error: сайт дал неверное значение')
     
 
-    if not args.command:
-        parser.print_help()
+
 
 if __name__ == "__main__":
     main()
