@@ -13,13 +13,13 @@ def load_html(url):
 def parse_product(url):
     html = load_html(url)
     soup = BeautifulSoup(html, 'lxml')
-
+    name = soup.find('h3').find('a').get('title')
+    price = soup.find('p', class_="price_color").text.replace('Â', '')
     #найти название
     #найти цену
 
 
-    return soup
-
+    return f'name = {name}, price = {price}'
     '''
     Буду использовать уже реализованные функции для нахождения цены.
     Тут надо будет попыхтеть над тем, чтобы с помошью библиотеки BS найти по тегам цену, лучше обе цены.
@@ -50,7 +50,7 @@ def main():
 
  
     if args.command == 'check':
-        print(parse_product(args.url), "вывод в ком. check")
+        print(f'output:\n{parse_product(args.url)}')
 
 
     if args.command == 'fetch_url':
