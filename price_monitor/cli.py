@@ -14,12 +14,11 @@ def parse_product(url):
     html = load_html(url)
     soup = BeautifulSoup(html, 'lxml')
 
-    name, price = None
     #найти название
     #найти цену
 
 
-    return name, price
+    return soup
 
     '''
     Буду использовать уже реализованные функции для нахождения цены.
