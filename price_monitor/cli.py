@@ -10,11 +10,6 @@ def load_html(url):
     return response.text
 
 
-def fetch_url(url):
-    '''переделать'''
-    pass
-
-
 def parse_product(url):
     html = load_html(url)
     soup = BeautifulSoup(html, 'lxml')
