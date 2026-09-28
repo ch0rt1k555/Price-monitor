@@ -3,33 +3,34 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def load_html(url):
-    '''
-    try:
-        # Маскируемся под настоящий браузер (Chrome на Windows)
-        
-        # Маскируемся под настоящий браузер (Chrome на Windows)
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
-        }
-        
-        response = requests.get(url, headers=headers)
-        
-        # Принудительно устанавливаем правильную кодировку текста
-        # Принудительно устанавливаем правильную кодировку текста
-        response.encoding = 'utf-8' 
-    
-        with open("traning.html", "r", encoding="utf-8") as file:
-            html_content = file.read()
-        return html_content
-    except Exception as e:
-        print(f"Ошибка при запросе: {e}")
-    '''    
 
-    with open("traning.html", "r", encoding="utf-8") as file:
-        html_content = file.read()
-    return html_content
+def load_html(url):
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    return response.text
+
+
+def fetch_url(url):
+    '''переделать'''
+    pass
+
+
+def parse_product(url):
+    html = load_html(url)
+    soup = BeautifulSoup(html, 'lxml')
+
+    name, price = None
+    #найти название
+    #найти цену
+
+
+    return name, price
+
+    '''
+    Буду использовать уже реализованные функции для нахождения цены.
+    Тут надо будет попыхтеть над тем, чтобы с помошью библиотеки BS найти по тегам цену, лучше обе цены.
+    Благо тут можно посмотреть видео о папрсинге озона в одной из вкладок ютуба.
+    '''
 
 
 
@@ -41,24 +42,26 @@ def main():
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
+    #команды
     parser_check = subparsers.add_parser("check", help="Check product price by URL")
-
+    parser_fetch_url = subparsers.add_parser("fetch_url", help="Get product's URL")
+    #аргументы команд
     parser_check.add_argument('url',  help='Ссылка на товар')
+    parser_fetch_url.add_argument('url',  help='Ссылка на товар')
+    
+
 
     
     args = parser.parse_args()
 
  
     if args.command == 'check':
-        html = load_html(args.url)
-        soup = BeautifulSoup(html, 'lxml')         
+        print(parse_product(args.url), "вывод в ком. check")
+
+
+    if args.command == 'fetch_url':
+        html = fetch_url(args.url)
         print(html)
-        if soup.find('p', class_ = 'price') is not None:
-            prices = list(i.text + ' Rub' for i in soup.find_all('p', class_ = 'price'))
-            print(prices)
-        else:
-            print('Error: сайт дал неверное значение')
-    
 
 
 
