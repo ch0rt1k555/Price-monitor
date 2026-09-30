@@ -23,8 +23,8 @@ def parse_product(url):
     all_titles = soup.findAll('h3')
     all_prices = soup.findAll('p', class_="price_color")
     for title, price in zip(all_titles, all_prices):
-        title = title.find('a').get('title') # Название из списка с названиями 
-        price = price.text.replace('Â', '')
+        title = title.find('a').get('title') # Наименование книги из списка с названиями 
+        price = price.text.replace('Â', '')  # Цена книги
         books[title] = price
 
     return books
