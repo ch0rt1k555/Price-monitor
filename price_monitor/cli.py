@@ -4,17 +4,38 @@ import sqlite3
 from bs4 import BeautifulSoup
 from decimal import Decimal
 
-'''
-            ЗАМЕТКИ: 
-            rowid - уже готовый id для каждого продукта в таблице
-            Нужно будет оформить автоматическое создание истории(т.е. таблицы) для каждого продукта
-            Возможно поле продукта в таблице Products следует изменять в зависимости от актуальной цены
-'''
 
 
-#Функции для работы с базой данных
-def add_to_db(title, currency, price, url): #           НУЖНО ПРОТЕСТИРОВАТЬ
-    data_base = sqlite3.connect("Products.db")
+
+#Функции для работы с базой данных------------------------------------------------------------------------
+def create_data_base():
+    data_base = sqlite3.connect('products.db')
+    db_cursor  = data_base.cursor()
+
+    db_cursor.execute("""
+    CREATE TABLE IF NOT EXISTS products(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    current_price TEXT NOT NULL,
+    url TEXT NOT NULL UNIQUE
+    )
+    """)
+    db_cursor.execute("""
+    CREATE TABLE IF NOT EXISTS price_history(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id NOT NULL,
+    checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    )
+    """)
+
+    data_base.commit()
+    data_base.close()
+
+
+def add_to_db(title, currency, price, url):
+    data_base = sqlite3.connect("products.db")
     db_cursor = data_base.cursor()
 
     # 1. Учим SQLite конвертировать Decimal в строку при ЗАПИСИ
@@ -22,19 +43,19 @@ def add_to_db(title, currency, price, url): #           НУЖНО ПРОТЕС�
 
 
 
-    db_cursor.execute(f"INSERT INTO Products VALUES (?, ?, ?, ?)", (title, currency, price, url))
+    db_cursor.execute(f"INSERT INTO products VALUES ( ?, ?, ?, ?)", (title, currency, price, url))
 
     data_base.commit()
     data_base.close()
 
 
-def show_all_products():#                               НУЖНО ПРОТЕСТИРОВАТЬ С ЗАПИСЯМИ
-    data_base = sqlite3.connect("Products.db")
+def show_all_products():
+    data_base = sqlite3.connect("products.db")
     db_cursor = data_base.cursor()
     # 2. Учим SQLite конвертировать строку обратно в Decimal при ЧТЕНИИ
 # (для этого при подключении нужно включить парсинг типов)
     sqlite3.register_converter("DECIMAL", lambda v: Decimal(v.decode("utf-8")))
-    db_cursor.execute("SELECT * FROM Products") # Что конкретно выводим из базы данных
+    db_cursor.execute("SELECT * FROM products") # Что конкретно выводим из базы данных
     print(db_cursor.fetchall())
 
     data_base.commit()
@@ -42,13 +63,7 @@ def show_all_products():#                               НУЖНО ПРОТЕС�
 
 
 
-#Функции для парсинга
-def get_url(url):
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    return response.url
-
-
+#Функции для парсинга-------------------------------------------------------------------------------------
 def load_html(url):
     response = requests.get(url, timeout=10)
     response.raise_for_status()
@@ -64,13 +79,16 @@ def show_html(url):
 def parse_product(html):
     soup = BeautifulSoup(html, 'lxml')
     title = soup.find("div", class_="col-sm-6 product_main").find("h1").text
-    price = soup.find("div", class_="col-sm-6 product_main").find("p", class_="price_color").text[1:]
-    currency = price[0] 
-    price = Decimal(price[1:])
+
+    price_text = soup.find("div", class_="col-sm-6 product_main").find("p", class_="price_color").text[1:]
+    currency = price_text[0] 
+    price = Decimal(price_text[1:])
+
     return title, currency, price
 
 
 def main():
+    create_data_base()
     parser = argparse.ArgumentParser(description="Price Monitor CLI Manager")
 
     parser.add_argument(
@@ -96,10 +114,8 @@ def main():
 
     #Команды для парсинга
     if args.command == 'check':
-        html= load_html(args.url)
-        url = get_url(args.url)
-        title, currency, price = parse_product(html)
-        print(f"Product: {title}\nPrice: {price} {currency}\nURL: {url}")
+        pass
+
 
     if args.command == 'show_html':
        show_html(args.url)
@@ -107,9 +123,10 @@ def main():
 
     #Команды для работы с базой данных
     if args.command == 'add':
-        url = get_url(args.url)
+        url = args.url
         html = load_html(url)
         title, currency, price = parse_product(html)
+        
         add_to_db(title, currency, price, url)
 
     if args.command == 'list':
