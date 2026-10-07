@@ -3,6 +3,7 @@ import requests
 import sqlite3
 from bs4 import BeautifulSoup
 from decimal import Decimal
+from models import Product
 
 
 
@@ -17,7 +18,7 @@ def create_data_base():
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     currency TEXT NOT NULL,
-    current_price TEXT NOT NULL,
+    current_price DECIMAL NOT NULL,
     url TEXT NOT NULL UNIQUE
     )
     """)
@@ -25,6 +26,8 @@ def create_data_base():
     CREATE TABLE IF NOT EXISTS price_history(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_id NOT NULL,
+    currency TEXT NOT NULL,
+    price DECIMAL NOT NULL,
     checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id)
     )
@@ -76,15 +79,29 @@ def show_html(url):
     print(soup.prettify())
 
 
-def parse_product(html):
-    soup = BeautifulSoup(html, 'lxml')
-    title = soup.find("div", class_="col-sm-6 product_main").find("h1").text
+def parse_product(id):
+    #ПОДКЛЮЧАЕМ 
+    data_base = sqlite3.connect('products')
+    db_cursor = data_base.cursor()
+    db_cursor.execute("SELECT title, currency, price, url FROM products WHERE id = ?", (id,))
+    title, currency, old_price, url = db_cursor.fetchall()
 
+    #ПАРСИМ САЙТ И НАХОДИМ ЦЕНУ
+    html = load_html(url)
+    soup = BeautifulSoup(html, 'lxml')
     price_text = soup.find("div", class_="col-sm-6 product_main").find("p", class_="price_color").text[1:]
     currency = price_text[0] 
-    price = Decimal(price_text[1:])
+    new_price = Decimal(price_text[1:])
 
-    return title, currency, price
+    sqlite3.register_adapter(Decimal, lambda d: str(d)) # КОНВЕРТАЦИЯ Decimal в str (честно говоря походит на костыль)
+    db_cursor.execute("UPDATE products SET price = ? WHERE id = ?", (new_price, id))
+    db_cursor.execute("INSERT INTO price_history VALUES (?, ?, ?)", (id, currency, new_price))
+
+    data_base.commit()
+    data_base.close()
+
+    print(f'id - {id}, title - {title}\n old price - {old_price}, new price' - {new_price})
+
 
 
 def main():
@@ -104,9 +121,9 @@ def main():
     parser_list = subparsers.add_parser('list', help='Show all tracked products')
 
     #Аргументы команд
-    parser_check.add_argument('url',  help='Ссылка на товар')
-    parser_show_html.add_argument('url',  help='Ссылка на товар')
-    parser_add.add_argument('url', help='Ссылка на товар')
+    parser_check.add_argument('id',  help='Products id from data base')
+    parser_show_html.add_argument('url',  help="Product's url")
+    parser_add.add_argument('url', help="Product's url")
 
     
     args = parser.parse_args()
@@ -114,7 +131,7 @@ def main():
 
     #Команды для парсинга
     if args.command == 'check':
-        pass
+        parse_product(args.id)
 
 
     if args.command == 'show_html':
