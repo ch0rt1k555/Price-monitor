@@ -3,9 +3,6 @@ import requests
 import sqlite3
 from bs4 import BeautifulSoup
 from decimal import Decimal
-from models import Product
-
-
 
 
 #Функции для работы с базой данных------------------------------------------------------------------------
@@ -41,12 +38,10 @@ def add_to_db(title, currency, price, url):
     data_base = sqlite3.connect("products.db")
     db_cursor = data_base.cursor()
 
-    # 1. Учим SQLite конвертировать Decimal в строку при ЗАПИСИ
+    # Конвертирование Decimal в строку при ЗАПИСИ
     sqlite3.register_adapter(Decimal, lambda d: str(d))
 
-
-
-    db_cursor.execute(f"INSERT INTO products VALUES ( ?, ?, ?, ?)", (title, currency, price, url))
+    db_cursor.execute(f"INSERT INTO products VALUES (NULL, ?, ?, ?, ?)", (title, currency, price, url)) #NULL для id, т.к. он генерируется
 
     data_base.commit()
     data_base.close()
@@ -55,7 +50,7 @@ def add_to_db(title, currency, price, url):
 def show_all_products():
     data_base = sqlite3.connect("products.db")
     db_cursor = data_base.cursor()
-    # 2. Учим SQLite конвертировать строку обратно в Decimal при ЧТЕНИИ
+    # Конвертирование строки обратно в Decimal при ЧТЕНИИ
 # (для этого при подключении нужно включить парсинг типов)
     sqlite3.register_converter("DECIMAL", lambda v: Decimal(v.decode("utf-8")))
     db_cursor.execute("SELECT * FROM products") # Что конкретно выводим из базы данных
@@ -67,6 +62,17 @@ def show_all_products():
 
 
 #Функции для парсинга-------------------------------------------------------------------------------------
+def show_id(url):
+    data_base = sqlite3.connect('products.db')
+    db_cursor = data_base.cursor()
+
+    db_cursor.execute("SELECT id FROM products WHERE url = ?", (url,))
+    print(db_cursor.fetchone())
+
+    data_base.commit()
+    data_base.close()
+
+
 def load_html(url):
     response = requests.get(url, timeout=10)
     response.raise_for_status()
@@ -81,10 +87,11 @@ def show_html(url):
 
 def parse_product(id):
     #ПОДКЛЮЧАЕМ 
-    data_base = sqlite3.connect('products')
+    data_base = sqlite3.connect('products.db')
     db_cursor = data_base.cursor()
-    db_cursor.execute("SELECT title, currency, price, url FROM products WHERE id = ?", (id,))
-    title, currency, old_price, url = db_cursor.fetchall()
+    sqlite3.register_converter("DECIMAL", lambda v: Decimal(v.decode("utf-8"))) # Конвертация в Decimal при ЧТЕНИИ
+    db_cursor.execute("SELECT title, currency, current_price, url FROM products WHERE id = ?", (id,))
+    title, currency, old_price, url = db_cursor.fetchone()
 
     #ПАРСИМ САЙТ И НАХОДИМ ЦЕНУ
     html = load_html(url)
@@ -93,15 +100,14 @@ def parse_product(id):
     currency = price_text[0] 
     new_price = Decimal(price_text[1:])
 
-    sqlite3.register_adapter(Decimal, lambda d: str(d)) # КОНВЕРТАЦИЯ Decimal в str (честно говоря походит на костыль)
-    db_cursor.execute("UPDATE products SET price = ? WHERE id = ?", (new_price, id))
-    db_cursor.execute("INSERT INTO price_history VALUES (?, ?, ?)", (id, currency, new_price))
+    sqlite3.register_adapter(Decimal, lambda d: str(d)) # КОНВЕРТАЦИЯ Decimal в str ЗАПИСЬ
+    db_cursor.execute("UPDATE products SET current_price = ? WHERE id = ?", (new_price, id))
+    db_cursor.execute("INSERT INTO price_history VALUES (NULL, ?, ?, ?, NULL)", (id, currency, new_price))
 
     data_base.commit()
     data_base.close()
 
-    print(f'id - {id}, title - {title}\n old price - {old_price}, new price' - {new_price})
-
+    print(f'id - {id},  title - {title}\n old price - {old_price}, new price - {new_price}')
 
 
 def main():
@@ -119,12 +125,13 @@ def main():
     parser_show_html = subparsers.add_parser("show_html", help="Show web_page's html")
     parser_add = subparsers.add_parser("add", help="Add url to data base")
     parser_list = subparsers.add_parser('list', help='Show all tracked products')
+    parser_show_id = subparsers.add_parser('show_id', help='Show products id by his url')
 
     #Аргументы команд
     parser_check.add_argument('id',  help='Products id from data base')
     parser_show_html.add_argument('url',  help="Product's url")
     parser_add.add_argument('url', help="Product's url")
-
+    parser_show_id.add_argument('url', help="Product's url")
     
     args = parser.parse_args()
 
@@ -136,6 +143,9 @@ def main():
 
     if args.command == 'show_html':
        show_html(args.url)
+
+    if args.command == 'show_id':
+        show_id(args.url)
 
 
     #Команды для работы с базой данных
