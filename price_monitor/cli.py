@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 from decimal import Decimal
 
 
+
+
 #Функции для работы с базой данных------------------------------------------------------------------------
 def create_data_base():
     data_base = sqlite3.connect('products.db')
@@ -13,7 +15,7 @@ def create_data_base():
     db_cursor.execute("""
     CREATE TABLE IF NOT EXISTS products(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
+    title TEXT NOT NULL,    
     currency TEXT NOT NULL,
     current_price DECIMAL NOT NULL,
     url TEXT NOT NULL UNIQUE
@@ -41,7 +43,7 @@ def add_to_db(title, currency, price, url):
     # Конвертирование Decimal в строку при ЗАПИСИ
     sqlite3.register_adapter(Decimal, lambda d: str(d))
 
-    db_cursor.execute(f"INSERT INTO products VALUES (NULL, ?, ?, ?, ?)", (title, currency, price, url)) #NULL для id, т.к. он генерируется
+    db_cursor.execute("INSERT INTO products VALUES (NULL, ?, ?, ?, ?)", (title, currency, price, url)) #NULL для id, т.к. он генерируется
 
     data_base.commit()
     data_base.close()
@@ -59,6 +61,18 @@ def show_all_products():
     data_base.commit()
     data_base.close()
 
+
+def show_history():
+    data_base = sqlite3.connect("products.db")
+    db_cursor = data_base.cursor()
+    # Конвертирование строки обратно в Decimal при ЧТЕНИИ
+# (для этого при подключении нужно включить парсинг типов)
+    sqlite3.register_converter("DECIMAL", lambda v: Decimal(v.decode("utf-8")))
+    db_cursor.execute("SELECT * FROM price_history") # Что конкретно выводим из ИСТОРИИ
+    print(db_cursor.fetchall())
+
+    data_base.commit()
+    data_base.close()
 
 
 #Функции для парсинга-------------------------------------------------------------------------------------
@@ -101,8 +115,8 @@ def parse_product(id):
     new_price = Decimal(price_text[1:])
 
     sqlite3.register_adapter(Decimal, lambda d: str(d)) # КОНВЕРТАЦИЯ Decimal в str ЗАПИСЬ
-    db_cursor.execute("UPDATE products SET current_price = ? WHERE id = ?", (new_price, id))
-    db_cursor.execute("INSERT INTO price_history VALUES (NULL, ?, ?, ?, NULL)", (id, currency, new_price))
+    db_cursor.execute("UPDATE products SET current_price = ? WHERE id = ?", (id , new_price))
+    db_cursor.execute("INSERT INTO price_history (product_id, currency, price) VALUES (?, ?, ?)", (id, currency, new_price))
 
     data_base.commit()
     data_base.close()
@@ -124,7 +138,8 @@ def main():
     parser_check = subparsers.add_parser("check", help="Check product price by URL")
     parser_show_html = subparsers.add_parser("show_html", help="Show web_page's html")
     parser_add = subparsers.add_parser("add", help="Add url to data base")
-    parser_list = subparsers.add_parser('list', help='Show all tracked products')
+    parser_products_list = subparsers.add_parser('products_list', help='Show all tracked products')
+    parser_history_list = subparsers.add_parser('history_list', help='Show tracking history') #ОДНОГО ПРОДУКТА ИЛИ ВСЕХ ???
     parser_show_id = subparsers.add_parser('show_id', help='Show products id by his url')
 
     #Аргументы команд
@@ -156,8 +171,11 @@ def main():
         
         add_to_db(title, currency, price, url)
 
-    if args.command == 'list':
+    if args.command == 'products_list':
         show_all_products()
+
+    if args.command == 'history_list':
+        show_history()
 
 
 
