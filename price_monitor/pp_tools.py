@@ -5,20 +5,27 @@ from decimal import Decimal
 from .db_tools import * 
   
 #Функции для парсинга-------------------------------------------------------------------------------------
-def show_id(url):
-    data_base = sqlite3.connect('products.db')
-    db_cursor = data_base.cursor()
-
-    db_cursor.execute("SELECT id FROM products WHERE url = ?", (url,))
-    print(db_cursor.fetchone())
-
-    data_base.close()
-
-
 def load_html(url):
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    return response.text
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.text
+    
+    except requests.exceptions.MissingSchema:
+        raise requests.exceptions.MissingSchema ("Не была указана ссылка на товар")
+    
+    except requests.exceptions.InvalidURL:
+        raise requests.exceptions.InvalidURL ("Была указана неверная ссылка на товар")
+
+    except requests.exceptions.ConnectionError:
+        raise requests.exceptions.ConnectionError ("Не удалось получить доступ к сайту")
+
+    except requests.exceptions.ReadTimeout:
+        raise requests.exceptions.ReadTimeout("Превышено время ожидания ответа")
+    
+    except requests.exceptions.Timeout:
+        raise requests.exceptions.Timeout ("Превышено время полключения к серверу")
+        
 
 
 def show_html(url):
@@ -48,7 +55,7 @@ def parse_product(soup):
 
 def check_product(id):
     #ПОДКЛЮЧАЕМ 
-    data_base = get_db_connection('products.db')
+    data_base = get_db_connection()
     db_cursor = data_base.cursor()
     db_cursor.execute("SELECT current_price, url FROM products WHERE id = ?", (id,))
     row = db_cursor.fetchone()

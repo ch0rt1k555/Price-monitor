@@ -1,2 +1,2 @@
 [console_scripts]
-price_monitor = price_monitor.cli:main
+my-cmd = price_monitor.cli:main

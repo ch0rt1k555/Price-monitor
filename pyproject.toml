@@ -5,6 +5,10 @@ description = "CLI-инструмент для мониторинга цен н�
 readme = "README.md"
 requires-python = ">=3.8"
 
+dependencies = ["beautifulsoup4 >= 4.15.0", 
+"lxml >= 6.1.3", 
+"requests >= 2.34.2", 
+"SQLite >= 3.45.3"]
 
 authors = [
     { name = "Зангиев Владислав / ch0rt1k555", email = "vlad.zangiyev.97@mail.ru" }
@@ -32,3 +36,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Utilities",
 ]
+
+[project.scripts]
+my-cmd = "price_monitor.cli:main"

@@ -1,4 +1,14 @@
 Metadata-Version: 2.4
 Name: price-monitor
 Version: 1.0.0
-Summary: Price Monitor CLI
+Summary: CLI-инструмент для мониторинга цен на маркетплейсах
+Author-email: Зангиев Владислав / ch0rt1k555 <vlad.zangiyev.97@mail.ru>
+License: MIT
+Project-URL: Repository, https://github.com/ch0rt1k555/Price-monitor
+Project-URL: Bug Tracker, https://github.com/ch0rt1k555/Price-monitor/issues
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: beautifulsoup4>=4.15.0
+Requires-Dist: lxml>=6.1.3
+Requires-Dist: requests>=2.34.2
+Requires-Dist: SQLite>=3.45.3

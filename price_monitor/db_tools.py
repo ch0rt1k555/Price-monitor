@@ -23,6 +23,7 @@ def create_data_base():
     currency TEXT NOT NULL,
     price DECIMAL NOT NULL,
     checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     FOREIGN KEY (product_id) REFERENCES products(id)
     FOREIGN KEY (key_product_id)  REFERENCES products (id) ON DELETE CASCADE
     )
@@ -46,7 +47,8 @@ def get_db_connection():
     db_uri = f"file:{db_path}?mode=rw"
     try:
     # Подключение с флагом uri=True
-        conn = sqlite3.connect(db_uri, detect_types=sqlite3.PARSE_DECLTYPES, uri=True)
+        conn = sqlite3.connect(db_uri, detect_types=sqlite3.PARSE_DECLTYPES |
+                                            sqlite3.PARSE_COLNAMES, uri=True)
     except sqlite3.OperationalError:
         print(f"Ошибка: Файл базы данных по пути {db_path} не найден. Новый файл создан не был.")
     
@@ -64,15 +66,18 @@ def get_db_connection():
 
 
 def add_to_db(title, currency, price, url):
-    data_base = get_db_connection("products.db")
+    data_base = get_db_connection()
     db_cursor = data_base.cursor()
+    try:
+        db_cursor.execute("INSERT INTO products VALUES (NULL, ?, ?, ?, ?)", (title, currency, price, url)) #NULL для id, т.к. он генерируется
+        db_cursor.execute("SELECT id FROM products WHERE title = ?", (title,))
+        id = db_cursor.fetchone()[0]
+        db_cursor.execute("INSERT INTO price_history (product_id, currency, price) VALUES (?, ?, ?)", (id, currency, price))
 
-    db_cursor.execute("INSERT INTO products VALUES (NULL, ?, ?, ?, ?)", (title, currency, price, url)) #NULL для id, т.к. он генерируется
-    db_cursor.execute("SELECT id FROM products WHERE title = ?", (title,))
-    id = db_cursor.fetchone()[0]
-    db_cursor.execute("INSERT INTO price_history (product_id, currency, price) VALUES (?, ?, ?)", (id, currency, price))
+        data_base.commit()
+    except sqlite3.IntegrityError:
+        raise sqlite3.IntegrityError ("Данный товар уже добавлен в базу данных")
 
-    data_base.commit()
     data_base.close()
 
 
@@ -86,19 +91,32 @@ def show_all_products():
         print(f'\ntitle - "{product[1]}", price - {product[2]}{product[3]}\n\n id - {product[0]},\t URL - {product[4]}\n')
     
 
-
 def show_history():
     data_base = get_db_connection()
     db_cursor = data_base.cursor()
-    db_cursor.execute("SELECT * FROM price_history") # Что конкретно выводим из ИСТОРИИ
+    db_cursor.execute("SELECT * FROM price_history ORDER BY product_id") # Что конкретно выводим из ИСТОРИИ
     history = db_cursor.fetchall()
     data_base.close()
     for product in history:
         print(f'\nid - {product[1]}, price - {product[2]}{product[3]}\n\n product_id - {product[0]}, checked_at - {product[4]}\n')    
 
 
+def show_id(url):
+    data_base = get_db_connection()
+    db_cursor = data_base.cursor()
+
+    try:
+        db_cursor.execute("SELECT id FROM products WHERE url = ?", (url,))
+        print(f'id - {db_cursor.fetchone()[0]}')
+
+    except sqlite3.DatabaseError:
+        raise sqlite3.DatabaseError ("Товар с введённым URL не был найден в базе данных")
+    
+    data_base.close()
+
+
 def clear_products_table(id):
-    data_base = sqlite3.connect()
+    data_base = get_db_connection()
     db_cursor = data_base.cursor()
 
     if id == None:
@@ -113,7 +131,7 @@ def clear_products_table(id):
 
 
 def clear_history_table(id):
-    data_base = sqlite3.connect()
+    data_base = get_db_connection()
     db_cursor = data_base.cursor()
 
     if id == None:
@@ -125,3 +143,16 @@ def clear_history_table(id):
 
     data_base.commit()
     data_base.close()
+
+
+def show_history_of_product(id):
+    data_base = get_db_connection()
+    db_cursor = data_base.cursor()
+
+    db_cursor.execute("SELECT * FROM price_history WHERE product_id = ? ORDER BY checked_at DESC", (id,))
+    product_history = db_cursor.fetchall()
+ 
+    data_base.close()
+
+    for line in product_history:
+        print(f'price - {line[2]}{line[3]}   when checked - {line[4]} ')
