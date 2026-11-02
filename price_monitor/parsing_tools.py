@@ -2,9 +2,9 @@ import requests
 import sqlite3
 from bs4 import BeautifulSoup
 from decimal import Decimal
-from .db_tools import * 
+from price_monitor.db_tools import get_db_connection
   
-#Функции для парсинга-------------------------------------------------------------------------------------
+
 def load_html(url):
     try:
         response = requests.get(url, timeout=10)

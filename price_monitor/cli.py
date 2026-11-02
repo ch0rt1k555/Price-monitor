@@ -1,65 +1,10 @@
 import argparse
-import requests
-import sqlite3
-from bs4 import BeautifulSoup
-from decimal import Decimal
 from .models import *
-from .pp_tools import *
-from .db_tools import *
+from .parsing_tools import (check_product,show_html, load_html, parse_product)
+from .db_tools import (create_data_base, show_id, add_to_db, show_all_products, show_history, show_history_of_product, clear_history_table, clear_products_table)
 
 
-'''
-        CONCERNS:
-            Что делать с Product?
-            Чат жпт сказал, что базу следует создавать, только тогда, когда она действительно требуется для выполнения операции. Я не согласен.
-        TODO:          
-           
 
-            
-
-            
-        Put on the back burne:
-            
-        
-            
-        IN PROGRESS:
-            
-            
-
-
-        DONE:
-            Функция add не работает на данный момент. Необходимо добавить функцию по обновлению цены уже добавленного товара (id) и 
-            отдельную функцию по парсингу продукта без открытия базы данных (html);
-
-            Удалил лишние commit из функций;
-
-            Я там на ночь глядя решил сделать так, чтобы при добавлении товара в products, он так же добавлялся в price_history, поэтому накосячил
-            в add_to_db;
-
-            Сделать корректный вывод у show_history;
-
-            Разобраться с sqlite.connect(), а именно detect_type
-                * 2.1    -- костыли. "Конфигурация типов должна быть общей, а не разбросанной по функциям";
-
-            PRAGMA foreign_keys = ON -- это ???     
-
-            2.4. СХЕМУ ТАБЛИЦ НЕОБХОДИМО УЛУЧШИТЬ
-
-            2.5. ПУТЬ К БАЗЕ МОЖЕТ ПРИВОДИТЬ К СОЗДАНИЮ ФАЙЛОВ
-            
-            3.4 ОШИБКИ САЙТОВ И БАЗЫ НЕ ОБРАБАТЫВАЮТСЯ НА УРОВНЕ CLI 
-
-            4.1. В pyproject.toml не объявлены зависимости
-
-            Разобраться с импортом функций из отдельных файлов для более удобной работы.
-
-             4.3. Не объявлена команда запуска установленного пакета
-
-             4.2 Отсутствует README.md    
-             
-             Оформить красивый вывод price_history по id товара
-        
-'''
 
 
   
@@ -126,14 +71,16 @@ def main():
     if args.command == 'history_list':
         show_history()
 
+    if args.command == 'show_product_history':
+        show_history_of_product(args.id)
+
     if args.command == 'clear_history':
         clear_history_table(args.id)
 
     if args.command == 'clear_products':
         clear_products_table(args.id)
 
-    if args.command == 'show_product_history':
-        show_history_of_product(args.id)
+
 
 if __name__ == "__main__":
     main()

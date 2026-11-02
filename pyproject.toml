@@ -3,12 +3,12 @@ name = "price-monitor"
 version = "1.0.0"
 description = "CLI-инструмент для мониторинга цен на маркетплейсах"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 
 dependencies = ["beautifulsoup4 >= 4.15.0", 
 "lxml >= 6.1.3", 
-"requests >= 2.34.2", 
-"SQLite >= 3.45.3"]
+"requests >= 2.34.2",
+"pytest>=8.0.0"]
 
 authors = [
     { name = "Зангиев Владислав / ch0rt1k555", email = "vlad.zangiyev.97@mail.ru" }
@@ -38,4 +38,10 @@ classifiers = [
 ]
 
 [project.scripts]
-my-cmd = "price_monitor.cli:main"
+price_monitor = "price_monitor.cli:main"
+
+[tool.uv.workspace]
+members = [
+    "pytest_tests",
+    "pytest_tests/pytest_tests/pytest_tests",
+]

@@ -4,7 +4,8 @@ from decimal import Decimal
 
 @dataclass
 class Product:
+    id: int
     title: str
-    price: Decimal
     currency: str
+    price: Decimal
     url: str
